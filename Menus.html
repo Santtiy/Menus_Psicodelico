@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Phsico Delico — Menús</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin:0; padding:0; background:#050305; color:#e0d2b4; font-family:"Cormorant Garamond", Georgia, serif; }
+  * { box-sizing: border-box; }
+  #root { position: fixed; inset: 0; }
+  /* Container lock into 16:9 */
+  .screen16x9 {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #050305;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="components/PauseScreen.jsx"></script>
+<script type="text/babel" src="components/OptionsScreen.jsx"></script>
+
+<script type="text/babel">
+const TWEAKS = /*EDITMODE-BEGIN*/{
+  "view": "prototype",
+  "grain": true,
+  "glow": 1.3,
+  "background": "in-game"
+}/*EDITMODE-END*/;
+
+function BackgroundLayer({ mode }) {
+  // Simulated in-game blurred scene behind the pause menu
+  if (mode === 'pure-black') return null;
+  return (
+    <div aria-hidden style={{
+      position: 'absolute', inset: 0,
+      background:
+        'radial-gradient(ellipse at 30% 40%, rgba(60,20,30,0.45), transparent 55%),' +
+        'radial-gradient(ellipse at 72% 68%, rgba(25,8,16,0.8), transparent 60%),' +
+        'linear-gradient(180deg, #0a0408 0%, #050305 60%, #000 100%)',
+      filter: 'blur(14px)',
+      pointerEvents: 'none',
+    }}>
+      {/* Abstract blurred "scene" silhouettes */}
+      <div style={{
+        position: 'absolute', bottom: '8%', left: '12%', width: 320, height: 440,
+        background: 'radial-gradient(ellipse at center, rgba(120,40,60,0.18), transparent 70%)',
+        filter: 'blur(24px)',
+      }} />
+      <div style={{
+        position: 'absolute', top: '12%', right: '10%', width: 380, height: 520,
+        background: 'radial-gradient(ellipse at center, rgba(60,20,40,0.35), transparent 70%)',
+        filter: 'blur(30px)',
+      }} />
+    </div>
+  );
+}
+
+function Prototype({ tweaks, setTweaks }) {
+  const [screen, setScreen] = React.useState('pause');
+
+  return (
+    <div className="screen16x9" data-screen-label={screen === 'pause' ? '01 Pausa' : '02 Opciones'}>
+      <BackgroundLayer mode={tweaks.background} />
+      {screen === 'pause' ? (
+        <PauseScreen
+          grainOn={tweaks.grain}
+          glowIntensity={tweaks.glow}
+          onNavigate={(t) => setScreen(t)}
+        />
+      ) : (
+        <OptionsScreen
+          grainOn={tweaks.grain}
+          glowIntensity={tweaks.glow}
+          onBack={() => setScreen('pause')}
+        />
+      )}
+
+      {/* Screen switcher pill */}
+      <div style={{
+        position: 'absolute', top: 24, left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', gap: 2, padding: 3,
+        border: '1px solid rgba(224,210,180,0.14)',
+        background: 'rgba(8,4,6,0.75)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 100,
+        fontFamily: '"JetBrains Mono", monospace',
+      }}>
+        {[['pause','PAUSA'],['options','OPCIONES']].map(([k, l]) => (
+          <button key={k} onClick={() => setScreen(k)} style={{
+            padding: '8px 18px',
+            border: 'none',
+            background: screen === k ? 'rgba(196,28,68,0.22)' : 'transparent',
+            color: screen === k ? '#ffe9ec' : 'rgba(224,210,180,0.55)',
+            fontFamily: 'inherit',
+            fontSize: 10,
+            letterSpacing: '0.3em',
+            cursor: 'pointer',
+            textShadow: screen === k ? '0 0 10px rgba(196,28,68,0.7)' : 'none',
+            transition: 'all 200ms',
+          }}>{l}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TweaksPanel({ tweaks, setTweaks, visible }) {
+  if (!visible) return null;
+  const row = (label, control) => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid rgba(224,210,180,0.08)' }}>
+      <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(224,210,180,0.7)' }}>{label}</span>
+      {control}
+    </div>
+  );
+  return (
+    <div style={{
+      position: 'fixed', right: 20, bottom: 20, width: 280,
+      padding: '16px 18px',
+      background: 'rgba(8,4,6,0.92)',
+      border: '1px solid rgba(196,28,68,0.35)',
+      color: '#e0d2b4',
+      fontFamily: '"JetBrains Mono", monospace',
+      backdropFilter: 'blur(8px)',
+      boxShadow: '0 0 40px rgba(196,28,68,0.15), 0 20px 60px rgba(0,0,0,0.6)',
+      zIndex: 200,
+    }}>
+      <div style={{
+        fontFamily: '"Cinzel Decorative", serif',
+        fontSize: 14,
+        letterSpacing: '0.35em',
+        color: '#ffe9ec',
+        textShadow: '0 0 12px rgba(196,28,68,0.6)',
+        marginBottom: 10,
+      }}>TWEAKS</div>
+      {row('Grain', (
+        <button onClick={() => setTweaks({ grain: !tweaks.grain })} style={tweakBtn(tweaks.grain)}>{tweaks.grain ? 'ON' : 'OFF'}</button>
+      ))}
+      {row('Glow', (
+        <input type="range" min="0" max="2" step="0.1" value={tweaks.glow}
+          onChange={(e) => setTweaks({ glow: parseFloat(e.target.value) })}
+          style={{ width: 120, accentColor: '#c41c44' }}
+        />
+      ))}
+      {row('Fondo', (
+        <div style={{ display: 'flex', gap: 4 }}>
+          {['in-game', 'pure-black'].map(m => (
+            <button key={m} onClick={() => setTweaks({ background: m })} style={tweakBtn(tweaks.background === m)}>
+              {m === 'in-game' ? 'ESCENA' : 'NEGRO'}
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function tweakBtn(active) {
+  return {
+    padding: '5px 10px',
+    border: `1px solid ${active ? 'rgba(196,28,68,0.7)' : 'rgba(224,210,180,0.18)'}`,
+    background: active ? 'rgba(196,28,68,0.2)' : 'transparent',
+    color: active ? '#ffe9ec' : 'rgba(224,210,180,0.7)',
+    fontFamily: 'inherit',
+    fontSize: 10,
+    letterSpacing: '0.2em',
+    cursor: 'pointer',
+  };
+}
+
+function App() {
+  const [tweaks, setTweaksState] = React.useState(TWEAKS);
+  const [tweaksVisible, setTweaksVisible] = React.useState(false);
+
+  const setTweaks = (patch) => {
+    setTweaksState((x) => {
+      const next = { ...x, ...patch };
+      try { window.parent.postMessage({ type: '__edit_mode_set_keys', edits: patch }, '*'); } catch {}
+      return next;
+    });
+  };
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === '__activate_edit_mode') setTweaksVisible(true);
+      if (e.data.type === '__deactivate_edit_mode') setTweaksVisible(false);
+    };
+    window.addEventListener('message', onMsg);
+    try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch {}
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  return (
+    <>
+      <Prototype tweaks={tweaks} setTweaks={setTweaks} />
+      <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} visible={tweaksVisible} />
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
